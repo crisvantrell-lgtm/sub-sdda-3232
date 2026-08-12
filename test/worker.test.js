@@ -17,6 +17,8 @@ const createTestApp = (overrides = {}) => {
 };
 
 describe('Worker', () => {
+    const testConfig = 'vmess://ew0KICAidiI6ICIyIiwNCiAgInBzIjogInRlc3QiLA0KICAiYWRkIjogIjEuMS4xLjEiLA0KICAicG9ydCI6ICI0NDMiLA0KICAiaWQiOiAiYWRkNjY2NjYtODg4OC04ODg4LTg4ODgtODg4ODg4ODg4ODg4IiwNCiAgImFpZCI6ICIwIiwNCiAgInNjeSI6ICJhdXRvIiwNCiAgIm5ldCI6ICJ3cyIsDQogICJ0eXBlIjogIm5vbmUiLA0KICAiaG9zdCI6ICIiLA0KICAicGF0aCI6ICIvIiwNCiAgInRscyI6ICJ0bHMiDQp9';
+
     it('GET / returns HTML', async () => {
         const app = createTestApp();
         const res = await app.request('http://localhost/');
@@ -75,6 +77,40 @@ describe('Worker', () => {
         expect(res.headers.get('content-type')).toContain('text/yaml');
         const text = await res.text();
         expect(text).toContain('proxies:');
+    });
+
+    it('GET /sub maps a Clash target to the Clash converter', async () => {
+        const app = createTestApp();
+        const res = await app.request(`http://localhost/sub?target=clash&url=${encodeURIComponent(testConfig)}`);
+
+        expect(res.status).toBe(200);
+        expect(res.headers.get('content-type')).toContain('text/yaml');
+        expect(await res.text()).toContain('proxies:');
+    });
+
+    it('GET /sub normalizes Surge target options', async () => {
+        const app = createTestApp();
+        const target = encodeURIComponent('surge&ver=4');
+        const res = await app.request(`http://localhost/sub?target=${target}&url=${encodeURIComponent(testConfig)}`);
+
+        expect(res.status).toBe(200);
+        expect(await res.text()).toContain('[Proxy]');
+    });
+
+    it('GET /sub rejects a missing subscription url', async () => {
+        const app = createTestApp();
+        const res = await app.request('http://localhost/sub?target=clash');
+
+        expect(res.status).toBe(400);
+        expect(await res.text()).toContain('Missing url parameter');
+    });
+
+    it('GET /sub rejects unsupported targets', async () => {
+        const app = createTestApp();
+        const res = await app.request(`http://localhost/sub?target=quanx&url=${encodeURIComponent(testConfig)}`);
+
+        expect(res.status).toBe(400);
+        expect(await res.text()).toContain('Unsupported target parameter');
     });
 
     it('GET /clash rejects empty url-test proxy groups with a diagnostic error', async () => {

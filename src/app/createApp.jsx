@@ -260,6 +260,38 @@ export function createApp(bindings = {}) {
         }
     });
 
+    app.get('/sub', (c) => {
+        const url = c.req.query('url');
+        if (!url) {
+            return c.text('Missing url parameter', 400);
+        }
+
+        const target = (c.req.query('target') || 'mixed').toLowerCase().split('&')[0];
+        const targetPaths = {
+            clash: '/clash',
+            clashr: '/clash',
+            singbox: '/singbox',
+            surge: '/surge',
+            mixed: '/xray',
+            v2ray: '/xray'
+        };
+        const path = targetPaths[target];
+        if (!path) {
+            return c.text(`Unsupported target parameter: ${target}`, 400);
+        }
+
+        const requestUrl = new URL(c.req.url);
+        requestUrl.pathname = path;
+        requestUrl.searchParams.delete('target');
+        requestUrl.searchParams.delete('url');
+        requestUrl.searchParams.set('config', url);
+
+        return app.fetch(new Request(requestUrl, {
+            method: 'GET',
+            headers: c.req.raw.headers
+        }));
+    });
+
     app.get('/xray', async (c) => {
         const inputString = c.req.query('config');
         if (!inputString) {
