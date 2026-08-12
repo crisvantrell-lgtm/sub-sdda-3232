@@ -1,0 +1,12 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "sub-sdda-3232"
+main = "src/worker.jsx"
+compatibility_date = "2024-07-24"
+compatibility_flags = ["nodejs_compat"]
+
+kv_namespaces = [
+  { binding = "SUBLINK_KV", id = "390688a7f3464725bfdc3a2b9b6bb04a" }
+]
+
+[assets]
+directory = "./public"
